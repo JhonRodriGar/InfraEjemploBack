@@ -78,7 +78,7 @@ public class CuentaService {
 //A continuación se guarda la transacción
         Transaccion transaccionBD = new Transaccion(); //Creo un objeto transacción
 
-        transaccionBD.setNumero("consig" +Math.random()); //El el campo número le asigno un aleatorio
+        transaccionBD.setNumero(null); //El el campo número le asigno un aleatorio
         transaccionBD.setIdCuenta(cuenta.getId()); //Al atributo idCuenta le asigno el valor que tenga el atributo id en el objeto cuenta
         transaccionBD.setTipo("Consignación");
         transaccionBD.setMonto(cuenta.getAmount());
@@ -118,7 +118,7 @@ public class CuentaService {
 //A continuación se guarda la transacción
         Transaccion transaccionBD = new Transaccion(); //Creo un objeto transacción
 
-        transaccionBD.setNumero("ret" +Math.random());
+        transaccionBD.setNumero(null);
         transaccionBD.setIdCuenta(cuenta.getId());
         transaccionBD.setTipo("Retiro");
         transaccionBD.setMonto(cuenta.getAmount());
@@ -163,7 +163,7 @@ public class CuentaService {
 //A continuación se guarda la transacción en cuenta origen
         Transaccion transaccionCtaOrigen = new Transaccion(); //Creo un objeto transacción
 
-        transaccionCtaOrigen.setNumero("transf" +Math.random());
+        transaccionCtaOrigen.setNumero(null);
         transaccionCtaOrigen.setIdCuenta(datosTransferencia.getCtaOrigen());
         transaccionCtaOrigen.setTipo("Transferencia realizada");
         transaccionCtaOrigen.setMonto(datosTransferencia.getMonto());
@@ -174,7 +174,7 @@ public class CuentaService {
 //A continuación se guarda la transacción en cuenta destino
         Transaccion transaccionCtaDestino = new Transaccion(); //Creo un objeto transacción
 
-        transaccionCtaDestino.setNumero("transf" +Math.random());
+        transaccionCtaDestino.setNumero(null);
         transaccionCtaDestino.setIdCuenta(datosTransferencia.getCtaDestino());
         transaccionCtaDestino.setTipo("Transferencia recibida");
         transaccionCtaDestino.setMonto(datosTransferencia.getMonto());

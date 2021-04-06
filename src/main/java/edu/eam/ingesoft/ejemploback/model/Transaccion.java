@@ -1,9 +1,7 @@
 package edu.eam.ingesoft.ejemploback.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -12,8 +10,9 @@ import java.util.Date;
 public class Transaccion implements Serializable {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "number")
-    private String numero;
+    private Integer numero;
 
     @Column(name = "acountid")
     private String idCuenta;
@@ -31,7 +30,7 @@ public class Transaccion implements Serializable {
         fecha = new Date();
     } //Es hoy, ahora
 
-    public Transaccion(String numero, String idCuenta, String tipo, double monto, Date fecha) {
+    public Transaccion(Integer numero, String idCuenta, String tipo, double monto, Date fecha) {
         this.numero = numero;
         this.idCuenta = idCuenta;
         this.tipo = tipo;
@@ -39,11 +38,12 @@ public class Transaccion implements Serializable {
         this.fecha = fecha;
     }
 
-    public String getNumero() {
+    public Integer getNumero() {
+
         return numero;
     }
 
-    public void setNumero(String numero) {
+    public void setNumero(Integer numero) {
         this.numero = numero;
     }
 
