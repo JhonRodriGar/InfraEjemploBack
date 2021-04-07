@@ -1,18 +1,13 @@
 package edu.eam.ingesoft.ejemploback.services;
 
-import edu.eam.ingesoft.ejemploback.model.Cliente;
-import edu.eam.ingesoft.ejemploback.model.Cuenta;
-import edu.eam.ingesoft.ejemploback.model.DatosTransferencia;
-import edu.eam.ingesoft.ejemploback.model.Transaccion;
+import edu.eam.ingesoft.ejemploback.model.*;
 import edu.eam.ingesoft.ejemploback.repositories.ClienteRepository;
 import edu.eam.ingesoft.ejemploback.repositories.CuentaRepository;
 import edu.eam.ingesoft.ejemploback.repositories.TransaccionRepository;
-import net.bytebuddy.matcher.FilterableList;
-import net.bytebuddy.pool.TypePool;
-import org.hibernate.query.criteria.internal.predicate.IsEmptyPredicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -64,79 +59,56 @@ public class CuentaService {
     }
 
 
-    public Cuenta consignarMonto(Cuenta cuenta){
-        Cuenta cuentaBD = cuentaRepository.findById(cuenta.getId()).orElse(null); //Trae todos los datos que hay en la BD de la cuenta que se haya ingresado
+
+    public void consignarMonto(String cuenta, MontoConsigRet montoConsigRet){
+        Cuenta cuentaBD = cuentaRepository.findById(cuenta).orElse(null); //Trae todos los datos que hay en la BD de la cuenta que se haya ingresado
 
         if (cuentaBD == null){
             throw new RuntimeException("No existe la cuenta a la que desea consignar");
         }
 
-        if ((cuenta.getAmount() == 0) || (cuenta.getAmount() < 0)){
+        if ((montoConsigRet.getMontoCT() == 0) || (montoConsigRet.getMontoCT() < 0)){
             throw new RuntimeException("El monto a consignar no puede ser 0 ni negativo");
         }
 
 //A continuación se guarda la transacción
-        Transaccion transaccionBD = new Transaccion(); //Creo un objeto transacción
-
-        transaccionBD.setNumero(null); //El el campo número le asigno un aleatorio
-        transaccionBD.setIdCuenta(cuenta.getId()); //Al atributo idCuenta le asigno el valor que tenga el atributo id en el objeto cuenta
-        transaccionBD.setTipo("Consignación");
-        transaccionBD.setMonto(cuenta.getAmount());
-
-        transaccionRepository.save(transaccionBD); //Guardo la transacción
+        Transaccion transaccionBD = new Transaccion(null, cuenta, "Consignación", montoConsigRet.getMontoCT(), new Date()); //Creo un objeto llamado transacionBD de la clase transacción y lo lleno con los datos que necesito enviar a la BD
+        transaccionRepository.save(transaccionBD); //Envío el objeto anterior a la BD
 //Transacción guardada ///////////////////
 
-        double montoTotal = cuentaBD.getAmount() + cuenta.getAmount(); //Al valor que haya en la base de datos le suma lo que va a consignar
+        double montoTotal = cuentaBD.getAmount() + montoConsigRet.getMontoCT(); //Al valor que haya en la base de datos le suma lo que va a consignar
 
-        System.out.println("El monto total de la cuenta es " + montoTotal);
+        cuentaBD.setAmount(montoTotal);
 
-        cuenta.setAmount(montoTotal); //El atributo amount del objeto cuenta toma el valor del montoTotal para posteriormente guardarlo en la BD
-
-        cuenta.setCedulaCliente(cuentaBD.getCedulaCliente()); //Como el customerid es una columna obligatoria en la BD, le paso los mismos datos en la edición
-        cuenta.setFechaApertura(cuentaBD.getFechaApertura()); //Como la fecha apertura se actualiza automaticamente desde el constructor, le paso los mismos datos en la edición
-
-        cuentaRepository.save(cuenta);
-        return cuenta;
+        cuentaRepository.save(cuentaBD);
     }
 
 
-    public Cuenta retirarMonto(Cuenta cuenta){
-        Cuenta cuentaBD = cuentaRepository.findById(cuenta.getId()).orElse(null); //Trae todos los datos de la cuenta que se haya ingresado
+    public void retirarMonto(String cuenta, MontoConsigRet montoConsigRet){
+        Cuenta cuentaBD = cuentaRepository.findById(cuenta).orElse(null); //Trae todos los datos de la cuenta que se haya ingresado
 
         if (cuentaBD == null){
             throw new RuntimeException("No existe la cuenta de la que desea retirar");
         }
 
-        if ((cuenta.getAmount() == 0) || (cuenta.getAmount() < 0)){
+        if ((montoConsigRet.getMontoCT() == 0) || (montoConsigRet.getMontoCT() < 0)){
             throw new RuntimeException("El monto a retirar no puede ser 0 ni negativo");
         }
 
-        if (cuentaBD.getAmount() < cuenta.getAmount()){
+        if (cuentaBD.getAmount() < montoConsigRet.getMontoCT()){
             throw new RuntimeException("No tiene fondos suficientes, tiene disponible " + cuentaBD.getAmount());
         }
 
 //A continuación se guarda la transacción
-        Transaccion transaccionBD = new Transaccion(); //Creo un objeto transacción
-
-        transaccionBD.setNumero(null);
-        transaccionBD.setIdCuenta(cuenta.getId());
-        transaccionBD.setTipo("Retiro");
-        transaccionBD.setMonto(cuenta.getAmount());
-
-        transaccionRepository.save(transaccionBD); //Guardo la transacción
+        Transaccion transaccionBD = new Transaccion(null, cuenta, "Retiro", montoConsigRet.getMontoCT(), new Date());
+        transaccionRepository.save(transaccionBD); //Envío el objeto anterior a la BD
 //Transacción guardada ///////////////////
 
-        double saldoCuenta = cuentaBD.getAmount() - cuenta.getAmount(); //Al valor que haya en la base de datos le resta lo que va a retirar
+        double saldoCuenta = cuentaBD.getAmount() - montoConsigRet.getMontoCT();
 
-        System.out.println("El saldo que le queda en la cuenta es " + saldoCuenta);
+        cuentaBD.setAmount(saldoCuenta);
 
-        cuenta.setAmount(saldoCuenta); //El atributo amount del objeto cuenta toma el valor del montoTotal para posteriormente guardarlo en la BD
-
-        cuenta.setCedulaCliente(cuentaBD.getCedulaCliente()); //Como el customerid es una columna obligatoria en la BD, le paso los mismos datos en la edición
-        cuenta.setFechaApertura(cuentaBD.getFechaApertura()); //Como la fecha apertura se actualiza automaticamente desde el constructor, le paso los mismos datos en la edición
-
-        cuentaRepository.save(cuenta);
-        return cuenta;
+        cuentaRepository.save(cuentaBD);
     }
 
 
@@ -160,49 +132,24 @@ public class CuentaService {
             throw new RuntimeException("No existe la cuenta de destino para transferir");
         }
 
-//A continuación se guarda la transacción en cuenta origen
-        Transaccion transaccionCtaOrigen = new Transaccion(); //Creo un objeto transacción
+//A continuación se guarda la transacción
+        Transaccion transaccionCtaOrigen = new Transaccion(null, datosTransferencia.getCtaOrigen(), "Transferencia realizada", datosTransferencia.getMonto(), new Date());
+        transaccionRepository.save(transaccionCtaOrigen); //Envío el objeto anterior a la BD
+//Transacción guardada ///////////////////
 
-        transaccionCtaOrigen.setNumero(null);
-        transaccionCtaOrigen.setIdCuenta(datosTransferencia.getCtaOrigen());
-        transaccionCtaOrigen.setTipo("Transferencia realizada");
-        transaccionCtaOrigen.setMonto(datosTransferencia.getMonto());
-
-        transaccionRepository.save(transaccionCtaOrigen); //Guardo la transacción
-//Transacción cuenta origen guardada ///////////////////
-
-//A continuación se guarda la transacción en cuenta destino
-        Transaccion transaccionCtaDestino = new Transaccion(); //Creo un objeto transacción
-
-        transaccionCtaDestino.setNumero(null);
-        transaccionCtaDestino.setIdCuenta(datosTransferencia.getCtaDestino());
-        transaccionCtaDestino.setTipo("Transferencia recibida");
-        transaccionCtaDestino.setMonto(datosTransferencia.getMonto());
-
-        transaccionRepository.save(transaccionCtaDestino); //Guardo la transacción
-//Transacción cuenta destino guardada ///////////////////
+//A continuación se guarda la transacción
+        Transaccion transaccionCtaDestino = new Transaccion(null, datosTransferencia.getCtaDestino(), "Transferencia recibida", datosTransferencia.getMonto(), new Date());
+        transaccionRepository.save(transaccionCtaDestino); //Envío el objeto anterior a la BD
+//Transacción guardada ///////////////////
 
         double saldoCuentaOrigen = cuentaOrigenBD.getAmount() - datosTransferencia.getMonto(); //Al valor que haya en la cuenta origen en la base de datos le resta lo que va a transferir
         double saldoCuentaDestino = cuentaDestinoBD.getAmount() + datosTransferencia.getMonto(); //Al valor que haya en la cuenta de destino en la base de datos le suma lo que le va a recibir por transferencia
 
-        System.out.println("El saldo que le queda en la cuenta origen es " + saldoCuentaOrigen); //Informativo, verifica si va bien
-        System.out.println("El saldo que le queda en la cuenta destino es " + saldoCuentaDestino);
+        cuentaOrigenBD.setAmount(saldoCuentaOrigen); //A la cuenta de origen le asigno el nuevo monto
+        cuentaDestinoBD.setAmount(saldoCuentaDestino);
 
-        Cuenta cuentaOrigen = cuentaRepository.getOne(datosTransferencia.getCtaOrigen()); //Crea un objeto cuentaOrigen que es el que voy a enviar al repository con todos los datos, inicialmente toma los mismos datos que hay en la BD ya que no pude crer el objeto vacío, tal vez porque en el modelo tieene la fecha
-        Cuenta cuentaDestino = cuentaRepository.getOne(datosTransferencia.getCtaDestino()); //Crea un objeto cuentaDestino que es el que voy a enviar al repository con todos los datos, inicialmente toma los mismos datos que hay en la BD
-
-        cuentaOrigen.setId(cuentaOrigen.getId()); //Le envía el mismo número de cuenta
-        cuentaOrigen.setAmount(saldoCuentaOrigen); //Le envía el nuevo saldo que va a tener después de realizar la transferencia
-        cuentaOrigen.setCedulaCliente(cuentaOrigen.getCedulaCliente()); //Le envía el mismo cliente
-        cuentaOrigen.setFechaApertura(cuentaOrigen.getFechaApertura()); //Le envía la misma fecha de apertura
-
-        cuentaDestino.setId(cuentaDestino.getId()); //Le envía el mismo número de cuenta
-        cuentaDestino.setAmount(saldoCuentaDestino); //Le envía el nuevo saldo que va a tener al recibir la transferencia
-        cuentaDestino.setCedulaCliente(cuentaDestino.getCedulaCliente()); //Le envía el mismo cliente
-        cuentaDestino.setFechaApertura(cuentaDestino.getFechaApertura()); //Le envía la misma fecha de apertura
-
-        cuentaRepository.save(cuentaOrigen); //Actualiza los datos de cuentaOrigen
-        cuentaRepository.save(cuentaDestino); //Actualiza los datos de cuentaDestino
+        cuentaRepository.save(cuentaOrigenBD); //Actualiza los datos de cuentaOrigen
+        cuentaRepository.save(cuentaDestinoBD); //Actualiza los datos de cuentaDestino
 
         return datosTransferencia;
     }

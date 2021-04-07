@@ -27,7 +27,7 @@ public class TransaccionService {
             throw new RuntimeException("No existe la cuenta");
         }
 
-        List<Transaccion> transaccionesCuenta = transaccionRepository.buscarTransaccionesCuentas(cuenta); //Le manda la cédula del cliente para consultar sus cuentas
+        List<Transaccion> transaccionesCuenta = transaccionRepository.buscarTransaccionesCuentas(cuenta); //Le manda la cédula del cliente para consultar si la cuenta tiene movimientos
 
         if (transaccionesCuenta.size() == 0) { //No ha realizado transacciones
             throw new RuntimeException("Aún no ha realizado transacciones");
